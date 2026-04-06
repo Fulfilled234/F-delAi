@@ -17,7 +17,7 @@ app.use(express.urlencoded({ extended: true }));
 app.get("/", (req, res) => {
   res.json({
     status: "ok",
-    app: "Retain",
+    app: "Fīdel",
     message: "AI Customer Win-Back System is running.",
   });
 });
