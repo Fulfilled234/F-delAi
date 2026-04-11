@@ -294,29 +294,22 @@ async function sendSummary(phone, business) {
 
 // ─── Send WhatsApp Message ────────────────────────────────
 async function sendMessage(to, message) {
-  const axios = require("axios");
+  const twilio = require("twilio");
+  const client = twilio(
+    process.env.TWILIO_ACCOUNT_SID,
+    process.env.TWILIO_AUTH_TOKEN
+  );
 
   try {
-    await axios.post(
-      `https://graph.facebook.com/v18.0/${process.env.PHONE_NUMBER_ID}/messages`,
-      {
-        messaging_product: "whatsapp",
-        to,
-        type: "text",
-        text: { body: message },
-      },
-      {
-        headers: {
-          Authorization: `Bearer ${process.env.WHATSAPP_TOKEN}`,
-          "Content-Type": "application/json",
-        },
-      }
-    );
+    await client.messages.create({
+      from: process.env.TWILIO_WHATSAPP_FROM,
+      to: `whatsapp:${to}`,
+      body: message,
+    });
   } catch (err) {
-    console.error("Failed to send message:", err.response?.data || err.message);
+    console.error("Failed to send message:", err.message);
   }
 }
-
 // ─── Start Server ─────────────────────────────────────────
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => {
