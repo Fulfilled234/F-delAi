@@ -24,19 +24,17 @@ app.get("/", (req, res) => {
 
 // ─── WhatsApp Webhook Verification ───────────────────────
 // Meta calls this once to verify your server is real
-app.get("/webhook", (req, res) => {
-  const VERIFY_TOKEN = process.env.VERIFY_TOKEN;
-  const mode = req.query["hub.mode"];
-  const token = req.query["hub.verify_token"];
-  const challenge = req.query["hub.challenge"];
-
-  if (mode === "subscribe" && token === VERIFY_TOKEN) {
-    console.log("✅ Webhook verified by Meta.");
-    return res.status(200).send(challenge);
+app.post("/webhook", async (req, res) => {
+  res.sendStatus(200);
+  try {
+    const from = req.body.From?.replace("whatsapp:", "");
+    const text = req.body.Body?.trim().toLowerCase();
+    if (!from || !text) return;
+    console.log(`📩 Message from ${from}: ${text}`);
+    await handleMessage(from, text);
+  } catch (err) {
+    console.error("Webhook error:", err.message);
   }
-
-  console.error("❌ Webhook verification failed.");
-  return res.sendStatus(403);
 });
 
 // ─── WhatsApp Webhook Receiver ───────────────────────────
