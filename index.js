@@ -22,8 +22,8 @@ app.get("/", (req, res) => {
   });
 });
 
-// ─── WhatsApp Webhook Verification ───────────────────────
-// Meta calls this once to verify your server is real
+// ─── Whatsapp Webhook Verification ───────────────────────
+//Twilio calls this once to verify your server is real
 app.post("/webhook", async (req, res) => {
   res.sendStatus(200);
   try {
@@ -36,7 +36,6 @@ app.post("/webhook", async (req, res) => {
     console.error("Webhook error:", err.message);
   }
 });
-
 // ─── WhatsApp Webhook Receiver ───────────────────────────
 // Meta sends all incoming messages here
 app.post("/webhook", async (req, res) => {
