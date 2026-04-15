@@ -29,8 +29,11 @@ app.post("/webhook", async (req, res) => {
   try {
     const from = req.body.From?.replace("whatsapp:", "");
     const text = req.body.Body?.trim().toLowerCase();
-    if (!from || !text) return;
-    console.log(`📩 Message from ${from}: ${text}`);
+    console.log('RAW BODY:', JSON.stringify(req.body));
+if (!from || !text) {
+  console.log('Early return — from:', from, 'text:', text);
+  return;
+}
     await handleMessage(from, text);
   } catch (err) {
     console.error("Webhook error:", err.message);
