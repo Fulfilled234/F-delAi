@@ -1,108 +1,83 @@
 require("dotenv").config();
 const express = require("express");
+const twilio = require("twilio");
 const { createClient } = require("@supabase/supabase-js");
 
-// ─── Clients ────────────────────────────────────────────
+// ─── Clients ─────────────────────────────────────────────────
 const app = express();
 const supabase = createClient(
   process.env.SUPABASE_URL,
   process.env.SUPABASE_KEY
 );
+const twilioClient = twilio(
+  process.env.TWILIO_ACCOUNT_SID,
+  process.env.TWILIO_AUTH_TOKEN
+);
 
-// ─── Middleware ──────────────────────────────────────────
+// ─── Middleware ───────────────────────────────────────────────
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
-// ─── Health Check ────────────────────────────────────────
+// ─── Health Check ─────────────────────────────────────────────
 app.get("/", (req, res) => {
   res.json({
     status: "ok",
-    app: "Fīdel",
+    app: "Retain",
     message: "AI Customer Win-Back System is running.",
   });
 });
 
-// ─── Whatsapp Webhook Verification ───────────────────────
-//Twilio calls this once to verify your server is real
+// ─── WhatsApp Webhook (Twilio) ────────────────────────────────
 app.post("/webhook", async (req, res) => {
-  res.sendStatus(200);
+  res.sendStatus(200); // Always respond to Twilio immediately
+
   try {
+    console.log("RAW BODY:", JSON.stringify(req.body));
+
     const from = req.body.From?.replace("whatsapp:", "");
     const text = req.body.Body?.trim().toLowerCase();
-    console.log('RAW BODY:', JSON.stringify(req.body));
-if (!from || !text) {
-  console.log('Early return — from:', from, 'text:', text);
-  return;
-}
-    await handleMessage(from, text);
-  } catch (err) {
-    console.error("Webhook error:", err.message);
-  }
-});
-// ─── WhatsApp Webhook Receiver ───────────────────────────
-// Meta sends all incoming messages here
-app.post("/webhook", async (req, res) => {
-  // Always acknowledge immediately — Meta requires this
-  res.sendStatus(200);
 
-  try {
-    const body = req.body;
-
-    // Ignore non-WhatsApp events
-    if (body.object !== "whatsapp_business_account") return;
-
-    const entry = body.entry?.[0];
-    const change = entry?.changes?.[0];
-    const value = change?.value;
-    const messages = value?.messages;
-
-    if (!messages || messages.length === 0) return;
-
-    const msg = messages[0];
-    const from = msg.from;           // sender's phone number
-    const text = msg.text?.body?.trim().toLowerCase();
-
-    if (!text) return;
+    if (!from || !text) {
+      console.log("Early return — from:", from, "text:", text);
+      return;
+    }
 
     console.log(`📩 Message from ${from}: ${text}`);
-
-    // ── Route incoming message ──
     await handleMessage(from, text);
 
   } catch (err) {
-    console.error("Webhook error:", err.message);
+    console.error("Webhook error:", err);
   }
 });
 
-// ─── Message Router ───────────────────────────────────────
+// ─── Message Router ───────────────────────────────────────────
 async function handleMessage(phone, text) {
-  // Check if business owner already exists
-  const { data: business } = await supabase
+  const { data: business, error } = await supabase
     .from("businesses")
     .select("*")
     .eq("whatsapp_number", phone)
     .single();
 
+  if (error) console.log("Business lookup:", error.message);
+
   if (!business) {
-    // New owner — start registration
     await handleRegistration(phone, text);
   } else {
-    // Existing owner — handle commands
     await handleCommands(phone, text, business);
   }
 }
 
-// ─── Registration Flow ────────────────────────────────────
+// ─── Registration Flow ────────────────────────────────────────
 async function handleRegistration(phone, text) {
-  // Check if they're mid-registration (session exists)
-  const { data: session } = await supabase
+  const { data: session, error } = await supabase
     .from("sessions")
     .select("*")
     .eq("phone_number", phone)
     .single();
 
+  if (error) console.log("Session lookup:", error.message);
+
   if (!session) {
-    // First message ever — welcome them
     await supabase.from("sessions").insert({
       phone_number: phone,
       state: "awaiting_business_name",
@@ -117,7 +92,6 @@ async function handleRegistration(phone, text) {
   }
 
   if (session.state === "awaiting_business_name") {
-    // Save business name, ask for category
     await supabase
       .from("sessions")
       .update({
@@ -144,7 +118,6 @@ async function handleRegistration(phone, text) {
     const category = categories[text] || "Other";
     const { business_name } = session.temp_data;
 
-    // Create the business record
     await supabase.from("businesses").insert({
       whatsapp_number: phone,
       name: business_name,
@@ -153,17 +126,12 @@ async function handleRegistration(phone, text) {
       is_active: true,
     });
 
-    // Create a user record linked to this business
     await supabase.from("users").insert({
       email: `${phone}@retain.app`,
       full_name: business_name,
     });
 
-    // Clear session
-    await supabase
-      .from("sessions")
-      .delete()
-      .eq("phone_number", phone);
+    await supabase.from("sessions").delete().eq("phone_number", phone);
 
     await sendMessage(
       phone,
@@ -178,28 +146,23 @@ async function handleRegistration(phone, text) {
   }
 }
 
-// ─── Command Handler ──────────────────────────────────────
+// ─── Command Handler ──────────────────────────────────────────
 async function handleCommands(phone, text, business) {
-  // Command: "[name] visited"
   if (text.endsWith("visited")) {
     const customerName = text.replace("visited", "").trim();
-
     if (!customerName) {
       await sendMessage(phone, `Please include the customer name.\nExample: *Sarah visited*`);
       return;
     }
-
     await logVisit(phone, customerName, business);
     return;
   }
 
-  // Command: "summary"
   if (text === "summary") {
     await sendSummary(phone, business);
     return;
   }
 
-  // Command: "help"
   if (text === "help") {
     await sendMessage(
       phone,
@@ -211,18 +174,16 @@ async function handleCommands(phone, text, business) {
     return;
   }
 
-  // Unknown command
   await sendMessage(
     phone,
     `I didn't understand that. Type *Help* to see available commands.`
   );
 }
 
-// ─── Log a Customer Visit ─────────────────────────────────
+// ─── Log a Customer Visit ─────────────────────────────────────
 async function logVisit(phone, customerName, business) {
   const now = new Date().toISOString();
 
-  // Check if customer already exists for this business
   const { data: existing } = await supabase
     .from("customers")
     .select("*")
@@ -231,7 +192,6 @@ async function logVisit(phone, customerName, business) {
     .single();
 
   if (existing) {
-    // Update last visit
     await supabase
       .from("customers")
       .update({ last_purchase_at: now, status: "active" })
@@ -247,7 +207,6 @@ async function logVisit(phone, customerName, business) {
         : "First visit"}`
     );
   } else {
-    // New customer — add them
     await supabase.from("customers").insert({
       business_id: business.id,
       name: customerName,
@@ -264,7 +223,7 @@ async function logVisit(phone, customerName, business) {
   }
 }
 
-// ─── Daily Summary ────────────────────────────────────────
+// ─── Daily Summary ────────────────────────────────────────────
 async function sendSummary(phone, business) {
   const today = new Date();
   today.setHours(0, 0, 0, 0);
@@ -280,9 +239,7 @@ async function sendSummary(phone, business) {
     return;
   }
 
-  const list = visits
-    .map((v, i) => `${i + 1}. ${v.name}`)
-    .join("\n");
+  const list = visits.map((v, i) => `${i + 1}. ${v.name}`).join("\n");
 
   await sendMessage(
     phone,
@@ -292,25 +249,21 @@ async function sendSummary(phone, business) {
   );
 }
 
-// ─── Send WhatsApp Message ────────────────────────────────
+// ─── Send WhatsApp Message ────────────────────────────────────
 async function sendMessage(to, message) {
-  const twilio = require("twilio");
-  const client = twilio(
-    process.env.TWILIO_ACCOUNT_SID,
-    process.env.TWILIO_AUTH_TOKEN
-  );
   try {
-    await client.messages.create({
-      from: process.env.TWILIO_WHATSAPP_FROM,
+    await twilioClient.messages.create({
+      from: `whatsapp:${process.env.TWILIO_WHATSAPP_NUMBER}`,
       to: `whatsapp:${to}`,
       body: message,
     });
     console.log(`✅ Message sent to ${to}`);
   } catch (err) {
-    console.error("Failed to send message:", err.message);
+    console.error("Failed to send message:", err);
   }
 }
-// ─── Start Server ─────────────────────────────────────────
+
+// ─── Start Server ─────────────────────────────────────────────
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => {
   console.log(`🚀 Retain server running on port ${PORT}`);
