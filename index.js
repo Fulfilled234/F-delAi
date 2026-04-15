@@ -29,8 +29,6 @@ app.get("/", (req, res) => {
 
 // ─── WhatsApp Webhook (Twilio) ────────────────────────────────
 app.post("/webhook", async (req, res) => {
-  res.sendStatus(200); // Always respond to Twilio immediately
-
   try {
     console.log("RAW BODY:", JSON.stringify(req.body));
 
@@ -39,6 +37,7 @@ app.post("/webhook", async (req, res) => {
 
     if (!from || !text) {
       console.log("Early return — from:", from, "text:", text);
+      res.sendStatus(200);
       return;
     }
 
@@ -47,6 +46,8 @@ app.post("/webhook", async (req, res) => {
 
   } catch (err) {
     console.error("Webhook error:", err);
+  } finally {
+    res.sendStatus(200); // always responds to Twilio, after work is done
   }
 });
 
