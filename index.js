@@ -50,6 +50,7 @@ async function handleRegistration(phone, text) {
     .from("sessions").select("*").eq("phone_number", phone).single();
 
   if (!session) {
+    await supabase.from("sessions").delete().eq("phone_number", phone);
     await supabase.from("sessions").insert({
       phone_number: phone,
       state: "awaiting_business_name",
