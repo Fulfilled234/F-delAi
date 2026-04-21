@@ -21,7 +21,8 @@ app.get("/", (req, res) => {
 app.post("/webhook", async (req, res) => {
   try {
     const from = req.body.From?.replace("whatsapp:", "");
-    const text = req.body.Body?.trim().toLowerCase();
+
+    const text = req.body.Body?.trim();
     console.log("RAW BODY:", JSON.stringify(req.body));
     if (!from || !text) return;
     console.log(`📩 Message from ${from}: ${text}`);
@@ -101,9 +102,10 @@ async function handleRegistration(phone, text) {
 }
 
 // ─── Command Handler ──────────────────────────────────────────
+
 async function handleCommands(phone, text, business) {
-  if (text.endsWith("visited")) {
-    const customerName = text.replace("visited", "").trim();
+  if (text.toLowerCase().endsWith("visited")) {
+    const customerName = text.replace(/visited/i, "").trim();
     if (!customerName) {
       await sendMessage(phone, `Please include the customer name.\nExample: *Sarah visited*`);
       return;
@@ -112,9 +114,9 @@ async function handleCommands(phone, text, business) {
     return;
   }
 
-  if (text === "summary") { await sendSummary(phone, business); return; }
+  if (text.toLowerCase() === "summary") { await sendSummary(phone, business); return; }
 
-  if (text === "help") {
+  if (text.toLowerCase() === "help") {
     await sendMessage(phone,
       `*Retain Commands* 📋\n\n` +
       `*[Name] visited* — Log a customer visit\n` +
