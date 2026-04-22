@@ -1,0 +1,923 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<title>Retain — Dashboard</title>
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<style>
+*, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+
+:root {
+  --bg:      #F0F2F8;
+  --white:   #FFFFFF;
+  --border:  #E4E6EF;
+  --text:    #1A1D2E;
+  --muted:   #9395A8;
+  --soft:    #6B6E85;
+  --teal:    #00D4B4;
+  --yellow:  #FFD166;
+  --blue:    #4F7FFF;
+  --blue-d:  #3563E9;
+  --rose:    #FF6B8A;
+  --rose-d:  #E84565;
+  --purple:  #8B5CF6;
+  --sidebar: #1A1D2E;
+  --r:       14px;
+  --rsm:     10px;
+  --sidebar-w: 64px;
+}
+
+html, body { font-size: 14px; font-family: 'Plus Jakarta Sans', sans-serif; }
+
+body {
+  background: var(--bg);
+  color: var(--text);
+  min-height: 100vh;
+  display: flex;
+  overflow-x: hidden;
+}
+
+/* ─── SIDEBAR ─── */
+.sidebar {
+  width: var(--sidebar-w);
+  min-height: 100vh;
+  background: var(--sidebar);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 18px 0;
+  position: fixed;
+  left: 0; top: 0; bottom: 0;
+  z-index: 100;
+}
+
+.s-logo {
+  width: 38px; height: 38px;
+  background: linear-gradient(135deg, var(--blue), var(--purple));
+  border-radius: 11px;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 17px;
+  margin-bottom: 24px;
+  cursor: pointer;
+  flex-shrink: 0;
+}
+
+.s-nav { display: flex; flex-direction: column; gap: 4px; align-items: center; width: 100%; padding: 0 10px; }
+
+.s-item {
+  width: 42px; height: 42px;
+  border-radius: 11px;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 17px;
+  cursor: pointer;
+  transition: all 0.15s;
+  color: #5a5e78;
+  position: relative;
+  flex-shrink: 0;
+}
+
+.s-item:hover { background: rgba(255,255,255,0.08); color: #fff; }
+.s-item.active { background: var(--blue); color: #fff; box-shadow: 0 4px 12px rgba(79,127,255,0.4); }
+
+.s-tip {
+  position: absolute;
+  left: 54px;
+  background: #2d3152;
+  color: #fff;
+  font-size: 11px;
+  font-weight: 600;
+  padding: 5px 10px;
+  border-radius: 7px;
+  white-space: nowrap;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.15s;
+  z-index: 200;
+}
+.s-item:hover .s-tip { opacity: 1; }
+
+.s-badge {
+  position: absolute;
+  top: 7px; right: 7px;
+  width: 7px; height: 7px;
+  background: var(--rose);
+  border-radius: 50%;
+  border: 2px solid var(--sidebar);
+}
+
+.s-divider { width: 28px; height: 1px; background: rgba(255,255,255,0.07); margin: 8px 0; }
+.s-spacer { flex: 1; }
+
+/* ─── MAIN ─── */
+.main {
+  margin-left: var(--sidebar-w);
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+/* ─── PAGES ─── */
+.page { display: none; padding: 20px; }
+.page.active { display: block; }
+
+/* ─── TOPBAR ─── */
+.topbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 20px;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.greeting { font-size: 20px; font-weight: 800; letter-spacing: -0.4px; }
+.greeting-date { font-size: 12px; color: var(--muted); margin-top: 2px; }
+
+.topbar-right { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+
+.search-wrap {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  background: var(--white);
+  border: 1px solid var(--border);
+  border-radius: var(--rsm);
+  padding: 8px 12px;
+  font-size: 12px;
+  color: var(--muted);
+  flex: 1;
+  min-width: 140px;
+  max-width: 220px;
+}
+
+.search-wrap input {
+  border: none; outline: none;
+  font-family: 'Plus Jakarta Sans', sans-serif;
+  font-size: 12px;
+  color: var(--text);
+  background: transparent;
+  width: 100%;
+}
+
+.search-wrap input::placeholder { color: var(--muted); }
+
+.btn {
+  display: inline-flex; align-items: center; gap: 5px;
+  padding: 8px 14px;
+  border-radius: var(--rsm);
+  font-family: 'Plus Jakarta Sans', sans-serif;
+  font-size: 12px; font-weight: 700;
+  cursor: pointer; border: none;
+  transition: all 0.15s; white-space: nowrap;
+}
+.btn-primary { background: var(--blue); color: #fff; box-shadow: 0 4px 10px rgba(79,127,255,0.3); }
+.btn-primary:hover { background: var(--blue-d); }
+.btn-ghost { background: var(--white); border: 1px solid var(--border); color: var(--soft); }
+.btn-ghost:hover { border-color: var(--blue); color: var(--blue); }
+.btn-sm { padding: 6px 11px; font-size: 11px; }
+.btn-danger { background: var(--rose); color: #fff; }
+
+/* ─── METRIC CARDS ─── */
+.cards-row {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 12px;
+  margin-bottom: 16px;
+}
+
+.mc {
+  border-radius: var(--r);
+  padding: 18px;
+  position: relative;
+  overflow: hidden;
+  transition: transform 0.2s;
+}
+.mc:hover { transform: translateY(-2px); }
+.mc.teal { background: linear-gradient(135deg,#00D4B4,#00A896); box-shadow: 0 6px 18px rgba(0,212,180,0.3); }
+.mc.yellow { background: linear-gradient(135deg,#FFD166,#FFC233); box-shadow: 0 6px 18px rgba(255,209,102,0.3); }
+.mc.blue { background: linear-gradient(135deg,#4F7FFF,#3563E9); box-shadow: 0 6px 18px rgba(79,127,255,0.3); }
+.mc.rose { background: linear-gradient(135deg,#FF6B8A,#E84565); box-shadow: 0 6px 18px rgba(255,107,138,0.3); }
+
+.mc-badge {
+  position: absolute; top: 12px; right: 12px;
+  background: rgba(255,255,255,0.25); color: #fff;
+  font-size: 9px; font-weight: 700;
+  padding: 2px 7px; border-radius: 999px;
+}
+.mc-icon { font-size: 20px; margin-bottom: 12px; }
+.mc-val { font-size: 30px; font-weight: 800; color: #fff; letter-spacing: -1px; line-height: 1; margin-bottom: 3px; }
+.mc-label { font-size: 10px; font-weight: 700; color: rgba(255,255,255,0.7); text-transform: uppercase; letter-spacing: 0.06em; }
+.mc-wave { position: absolute; bottom: 0; right: 0; width: 70px; height: 40px; opacity: 0.15; }
+
+/* ─── CARD ─── */
+.card {
+  background: var(--white);
+  border-radius: var(--r);
+  overflow: hidden;
+  box-shadow: 0 1px 4px rgba(0,0,0,0.05);
+  margin-bottom: 14px;
+}
+
+.card-hd {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 16px 16px 12px;
+}
+.card-title {
+  display: flex; align-items: center; gap: 8px;
+  font-size: 13px; font-weight: 700;
+}
+.card-icon {
+  width: 26px; height: 26px; border-radius: 7px;
+  display: flex; align-items: center; justify-content: center; font-size: 12px;
+}
+.ci-teal { background: rgba(0,212,180,0.12); }
+.ci-yellow { background: rgba(255,209,102,0.15); }
+.ci-blue { background: rgba(79,127,255,0.12); }
+.ci-rose { background: rgba(255,107,138,0.12); }
+.ci-purple { background: rgba(139,92,246,0.12); }
+
+.card-action { font-size: 11px; color: var(--blue); font-weight: 600; cursor: pointer; }
+
+/* ─── TABLE ─── */
+.tbl-wrap { overflow-x: auto; -webkit-overflow-scrolling: touch; }
+table { width: 100%; border-collapse: collapse; min-width: 380px; }
+thead tr { border-bottom: 1px solid var(--border); background: #fafbfd; }
+th { font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.09em; color: var(--muted); padding: 9px 14px; text-align: left; white-space: nowrap; }
+td { padding: 10px 14px; font-size: 12px; color: var(--soft); border-bottom: 1px solid rgba(0,0,0,0.04); vertical-align: middle; }
+tr:last-child td { border-bottom: none; }
+tbody tr:hover td { background: rgba(79,127,255,0.03); }
+.td-name { display: flex; align-items: center; gap: 9px; }
+.td-av { width: 28px; height: 28px; border-radius: 7px; display: flex; align-items: center; justify-content: center; font-size: 11px; font-weight: 800; color: #fff; flex-shrink: 0; }
+.td-primary { color: var(--text) !important; font-weight: 600; }
+.td-mono { font-family: 'JetBrains Mono', monospace; font-size: 11px; }
+
+/* ─── PILLS ─── */
+.pill { display: inline-flex; align-items: center; gap: 4px; font-size: 10px; font-weight: 700; padding: 3px 8px; border-radius: 999px; white-space: nowrap; }
+.pill::before { content:''; width:5px; height:5px; border-radius:50%; }
+.pill-active { background:rgba(0,212,180,0.12); color:#00A896; }
+.pill-active::before { background:var(--teal); }
+.pill-lost { background:rgba(255,107,138,0.12); color:var(--rose-d); }
+.pill-lost::before { background:var(--rose); }
+.pill-at_risk { background:rgba(255,209,102,0.15); color:#b07d00; }
+.pill-at_risk::before { background:var(--yellow); }
+.pill-on { background:rgba(79,127,255,0.1); color:var(--blue-d); }
+.pill-on::before { background:var(--blue); }
+
+/* ─── FEED ─── */
+.feed-item { display:flex; gap:11px; padding:11px 16px; border-bottom:1px solid rgba(0,0,0,0.04); transition:background 0.1s; }
+.feed-item:last-child { border-bottom:none; }
+.feed-item:hover { background:rgba(79,127,255,0.03); }
+.feed-av { width:32px; height:32px; border-radius:9px; display:flex; align-items:center; justify-content:center; font-size:12px; font-weight:800; color:#fff; flex-shrink:0; }
+.feed-body { flex:1; min-width:0; }
+.feed-name { font-size:12px; font-weight:700; color:var(--text); margin-bottom:2px; }
+.feed-sub { font-size:11px; color:var(--muted); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+.feed-time { font-size:10px; color:var(--muted); font-family:'JetBrains Mono',monospace; margin-top:3px; }
+.returned-badge { display:inline-block; font-size:9px; font-weight:700; background:rgba(0,212,180,0.12); color:#00A896; padding:2px 6px; border-radius:999px; margin-left:5px; }
+
+/* ─── DONUT ─── */
+.donut-wrap { display:flex; align-items:center; gap:16px; padding:0 16px 16px; flex-wrap:wrap; }
+.donut-legend { flex:1; min-width:120px; display:flex; flex-direction:column; gap:10px; }
+.legend-item { display:flex; align-items:center; justify-content:space-between; }
+.legend-left { display:flex; align-items:center; gap:7px; }
+.legend-dot { width:9px; height:9px; border-radius:3px; flex-shrink:0; }
+.legend-label { font-size:12px; color:var(--soft); font-weight:500; }
+.legend-val { font-size:13px; font-weight:700; color:var(--text); }
+.legend-pct { font-size:11px; color:var(--muted); }
+
+/* ─── MODAL ─── */
+.modal-overlay {
+  position: fixed; inset: 0;
+  background: rgba(0,0,0,0.5);
+  z-index: 1000;
+  display: none;
+  align-items: center; justify-content: center;
+  padding: 20px;
+}
+.modal-overlay.open { display: flex; }
+.modal {
+  background: var(--white);
+  border-radius: var(--r);
+  width: 100%; max-width: 420px;
+  padding: 24px;
+  box-shadow: 0 20px 60px rgba(0,0,0,0.2);
+  animation: slideUp 0.2s ease;
+}
+@keyframes slideUp { from { transform: translateY(20px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
+.modal-title { font-size: 16px; font-weight: 800; margin-bottom: 4px; }
+.modal-sub { font-size: 12px; color: var(--muted); margin-bottom: 20px; }
+.modal-close { float: right; background: none; border: none; font-size: 18px; cursor: pointer; color: var(--muted); margin-top: -4px; }
+
+.form-group { margin-bottom: 14px; }
+.form-label { font-size: 11px; font-weight: 700; color: var(--soft); text-transform: uppercase; letter-spacing: 0.06em; margin-bottom: 6px; display: block; }
+.form-input, .form-select {
+  width: 100%;
+  padding: 10px 12px;
+  border: 1px solid var(--border);
+  border-radius: var(--rsm);
+  font-family: 'Plus Jakarta Sans', sans-serif;
+  font-size: 13px; color: var(--text);
+  background: var(--white);
+  outline: none; transition: border-color 0.15s;
+}
+.form-input:focus, .form-select:focus { border-color: var(--blue); box-shadow: 0 0 0 3px rgba(79,127,255,0.1); }
+.form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+.modal-footer { display: flex; gap: 10px; justify-content: flex-end; margin-top: 20px; }
+
+/* ─── SKELETON ─── */
+.skeleton { background: linear-gradient(90deg,#f0f2f8 25%,#e4e6f0 50%,#f0f2f8 75%); background-size:200% 100%; animation:shimmer 1.4s infinite; border-radius:6px; }
+@keyframes shimmer { 0%{background-position:200% 0} 100%{background-position:-200% 0} }
+.loading-ph { padding:14px 16px; display:flex; flex-direction:column; gap:10px; }
+.skel-row { display:flex; gap:9px; align-items:center; }
+.skel-av { width:28px; height:28px; border-radius:8px; flex-shrink:0; }
+.skel-line { height:9px; border-radius:4px; }
+
+/* ─── EMPTY ─── */
+.empty-state { padding:36px 16px; text-align:center; }
+.empty-icon { font-size:28px; margin-bottom:8px; opacity:0.3; }
+.empty-text { font-size:12px; color:var(--muted); }
+
+/* ─── TOAST ─── */
+.toast {
+  position: fixed; bottom: 24px; right: 24px;
+  background: var(--text); color: #fff;
+  padding: 12px 18px; border-radius: 10px;
+  font-size: 13px; font-weight: 600;
+  box-shadow: 0 8px 24px rgba(0,0,0,0.2);
+  z-index: 9999; display: none;
+  animation: fadeUp 0.3s ease;
+}
+@keyframes fadeUp { from{opacity:0;transform:translateY(10px)} to{opacity:1;transform:translateY(0)} }
+
+/* ─── SEARCH RESULTS ─── */
+.search-results {
+  position: absolute; top: 100%; left: 0; right: 0;
+  background: var(--white);
+  border: 1px solid var(--border);
+  border-radius: var(--rsm);
+  box-shadow: 0 8px 24px rgba(0,0,0,0.1);
+  z-index: 300; max-height: 260px; overflow-y: auto;
+  display: none;
+}
+.search-results.open { display: block; }
+.sr-item { display:flex; align-items:center; gap:10px; padding:10px 14px; cursor:pointer; border-bottom:1px solid rgba(0,0,0,0.04); transition:background 0.1s; }
+.sr-item:hover { background: rgba(79,127,255,0.05); }
+.sr-item:last-child { border-bottom: none; }
+.sr-name { font-size:13px; font-weight:600; color:var(--text); }
+.sr-sub { font-size:11px; color:var(--muted); }
+.sr-empty { padding:20px; text-align:center; font-size:12px; color:var(--muted); }
+
+.search-relative { position: relative; flex: 1; max-width: 220px; }
+
+/* ─── WINBACK BTN ─── */
+.winback-btn { display:inline-flex; align-items:center; gap:5px; font-size:11px; font-weight:700; color:var(--blue); cursor:pointer; background:rgba(79,127,255,0.08); border:1px solid rgba(79,127,255,0.2); border-radius:7px; padding:5px 11px; font-family:'Plus Jakarta Sans',sans-serif; transition:all 0.15s; }
+.winback-btn:hover { background:var(--blue); color:#fff; }
+.winback-btn:disabled { opacity:0.6; cursor:not-allowed; }
+
+/* ─── PAGE HEADER ─── */
+.page-header { margin-bottom: 18px; }
+.page-title { font-size: 18px; font-weight: 800; letter-spacing: -0.4px; }
+.page-sub { font-size: 12px; color: var(--muted); margin-top: 3px; }
+
+/* ─── SCROLLBAR ─── */
+::-webkit-scrollbar { width:3px; height:3px; }
+::-webkit-scrollbar-thumb { background:var(--border); border-radius:2px; }
+</style>
+</head>
+<body>
+
+<!-- SIDEBAR -->
+<aside class="sidebar">
+  <div class="s-logo">🔁</div>
+  <div class="s-nav">
+    <div class="s-item active" onclick="navTo('dashboard', this)">⊞<span class="s-tip">Dashboard</span></div>
+    <div class="s-item" onclick="navTo('customers', this)">👥<span class="s-tip">Customers</span></div>
+    <div class="s-item" onclick="navTo('atrisk', this)">
+      ⚠️
+      <div class="s-badge" id="sb-atrisk" style="display:none"></div>
+      <span class="s-tip">At Risk</span>
+    </div>
+    <div class="s-item" onclick="navTo('lost', this)">
+      💔
+      <div class="s-badge" id="sb-lost" style="display:none"></div>
+      <span class="s-tip">Lost</span>
+    </div>
+    <div class="s-divider"></div>
+    <div class="s-item" onclick="navTo('winback', this)">💬<span class="s-tip">Win-back</span></div>
+    <div class="s-item" onclick="navTo('businesses', this)">🏪<span class="s-tip">Businesses</span></div>
+    <div class="s-spacer"></div>
+    <div class="s-item" onclick="navTo('settings', this)">⚙️<span class="s-tip">Settings</span></div>
+  </div>
+</aside>
+
+<!-- MAIN -->
+<div class="main">
+
+  <!-- ═══ DASHBOARD PAGE ═══ -->
+  <div id="page-dashboard" class="page active">
+    <div class="topbar">
+      <div>
+        <div class="greeting" id="greeting-text">Good morning 👋</div>
+        <div class="greeting-date" id="greeting-date">—</div>
+      </div>
+      <div class="topbar-right">
+        <div class="search-relative">
+          <div class="search-wrap">
+            🔍 <input type="text" id="search-input" placeholder="Search customers..." oninput="onSearch(this.value)" onfocus="showResults()" onblur="setTimeout(hideResults,200)">
+          </div>
+          <div class="search-results" id="search-results"></div>
+        </div>
+        <button class="btn btn-ghost" onclick="loadAll()">↻</button>
+        <button class="btn btn-primary" onclick="openAddBusiness()">+ Add Business</button>
+      </div>
+    </div>
+
+    <div class="cards-row">
+      <div class="mc teal"><span class="mc-badge">Live</span><div class="mc-icon">🏪</div><div class="mc-val" id="mc-biz">—</div><div class="mc-label">Businesses</div><svg class="mc-wave" viewBox="0 0 70 40"><path d="M0 28 Q18 16 35 22 Q52 30 70 18" stroke="white" stroke-width="2" fill="none"/></svg></div>
+      <div class="mc yellow"><span class="mc-badge">Healthy</span><div class="mc-icon">✅</div><div class="mc-val" id="mc-active">—</div><div class="mc-label">Active Customers</div><svg class="mc-wave" viewBox="0 0 70 40"><path d="M0 24 Q12 12 24 18 Q36 26 50 14 Q60 8 70 12" stroke="white" stroke-width="2" fill="none"/></svg></div>
+      <div class="mc blue"><span class="mc-badge">AI</span><div class="mc-icon">💬</div><div class="mc-val" id="mc-msgs">—</div><div class="mc-label">Messages Sent</div><svg class="mc-wave" viewBox="0 0 70 40"><path d="M0 30 Q10 18 20 24 Q32 32 45 16 Q58 4 70 10" stroke="white" stroke-width="2" fill="none"/></svg></div>
+      <div class="mc rose"><span class="mc-badge">Alert</span><div class="mc-icon">📉</div><div class="mc-val" id="mc-lost">—</div><div class="mc-label">Lost Customers</div><svg class="mc-wave" viewBox="0 0 70 40"><path d="M0 16 Q18 26 35 22 Q52 16 70 26" stroke="white" stroke-width="2" fill="none"/></svg></div>
+    </div>
+
+    <div class="card">
+      <div class="card-hd">
+        <div class="card-title"><div class="card-icon ci-blue">👥</div>Recent Customers</div>
+        <span class="card-action" onclick="navTo('customers', null)">View all →</span>
+      </div>
+      <div id="dash-customers">
+        <div class="loading-ph">
+          <div class="skel-row"><div class="skeleton skel-av"></div><div class="skeleton skel-line" style="width:55%"></div></div>
+          <div class="skel-row"><div class="skeleton skel-av"></div><div class="skeleton skel-line" style="width:42%"></div></div>
+          <div class="skel-row"><div class="skeleton skel-av"></div><div class="skeleton skel-line" style="width:63%"></div></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-hd">
+        <div class="card-title"><div class="card-icon ci-teal">📊</div>Customer Health</div>
+      </div>
+      <div id="health-panel" class="donut-wrap">
+        <div class="loading-ph" style="width:100%">
+          <div class="skeleton" style="width:100px;height:100px;border-radius:50%;margin:0 auto"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══ CUSTOMERS PAGE ═══ -->
+  <div id="page-customers" class="page">
+    <div class="page-header">
+      <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px">
+        <div><div class="page-title">All Customers</div><div class="page-sub">Every customer tracked by Retain</div></div>
+        <button class="btn btn-primary btn-sm" onclick="openAddCustomer()">+ Add Customer</button>
+      </div>
+    </div>
+    <div class="card">
+      <div id="all-customers-panel">
+        <div class="loading-ph">
+          <div class="skel-row"><div class="skeleton skel-av"></div><div class="skeleton skel-line" style="width:60%"></div></div>
+          <div class="skel-row"><div class="skeleton skel-av"></div><div class="skeleton skel-line" style="width:45%"></div></div>
+          <div class="skel-row"><div class="skeleton skel-av"></div><div class="skeleton skel-line" style="width:70%"></div></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══ AT RISK PAGE ═══ -->
+  <div id="page-atrisk" class="page">
+    <div class="page-header">
+      <div class="page-title">⚠️ At Risk Customers</div>
+      <div class="page-sub">Customers approaching inactivity threshold</div>
+    </div>
+    <div class="card">
+      <div id="atrisk-panel"><div class="loading-ph"><div class="skel-row"><div class="skeleton skel-av"></div><div class="skeleton skel-line" style="width:55%"></div></div></div></div>
+    </div>
+  </div>
+
+  <!-- ═══ LOST PAGE ═══ -->
+  <div id="page-lost" class="page">
+    <div class="page-header">
+      <div class="page-title">💔 Lost Customers</div>
+      <div class="page-sub">Win-back messages have been triggered</div>
+    </div>
+    <div class="card">
+      <div id="lost-panel"><div class="loading-ph"><div class="skel-row"><div class="skeleton skel-av"></div><div class="skeleton skel-line" style="width:55%"></div></div></div></div>
+    </div>
+  </div>
+
+  <!-- ═══ WIN-BACK PAGE ═══ -->
+  <div id="page-winback" class="page">
+    <div class="page-header">
+      <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px">
+        <div><div class="page-title">💬 Win-back Messages</div><div class="page-sub">AI-generated messages sent to lost customers</div></div>
+        <button class="btn btn-primary btn-sm" onclick="triggerWinback(this)">▶ Run Win-back Now</button>
+      </div>
+    </div>
+    <div class="card">
+      <div id="winback-panel"><div class="loading-ph"><div class="skel-row"><div class="skeleton skel-av"></div><div class="skeleton skel-line" style="width:60%"></div></div></div></div>
+    </div>
+  </div>
+
+  <!-- ═══ BUSINESSES PAGE ═══ -->
+  <div id="page-businesses" class="page">
+    <div class="page-header">
+      <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px">
+        <div><div class="page-title">🏪 Businesses</div><div class="page-sub">All businesses registered on Retain</div></div>
+        <button class="btn btn-primary btn-sm" onclick="openAddBusiness()">+ Add Business</button>
+      </div>
+    </div>
+    <div class="card">
+      <div id="biz-panel"><div class="loading-ph"><div class="skel-row"><div class="skeleton skel-av"></div><div class="skeleton skel-line" style="width:50%"></div></div></div></div>
+    </div>
+  </div>
+
+  <!-- ═══ SETTINGS PAGE ═══ -->
+  <div id="page-settings" class="page">
+    <div class="page-header">
+      <div class="page-title">⚙️ Settings</div>
+      <div class="page-sub">Manage your business profile and preferences</div>
+    </div>
+    <div id="settings-content">
+      <div class="loading-ph"><div class="skeleton skel-line" style="width:60%"></div><div class="skeleton skel-line" style="width:40%"></div></div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══ ADD BUSINESS MODAL ═══ -->
+<div class="modal-overlay" id="modal-add-biz">
+  <div class="modal">
+    <button class="modal-close" onclick="closeModal('modal-add-biz')">✕</button>
+    <div class="modal-title">Add Business</div>
+    <div class="modal-sub">Register a new business on Retain</div>
+    <div class="form-group">
+      <label class="form-label">Business Name</label>
+      <input class="form-input" id="biz-name" placeholder="e.g. Glam Hair Studio">
+    </div>
+    <div class="form-group">
+      <label class="form-label">WhatsApp Number</label>
+      <input class="form-input" id="biz-phone" placeholder="+2348012345678">
+    </div>
+    <div class="form-group">
+      <label class="form-label">Category</label>
+      <select class="form-select" id="biz-category">
+        <option value="Salon / Beauty">Salon / Beauty</option>
+        <option value="Pharmacy / Clinic">Pharmacy / Clinic</option>
+        <option value="Restaurant / Food">Restaurant / Food</option>
+        <option value="Supermarket / Shop">Supermarket / Shop</option>
+        <option value="Other">Other</option>
+      </select>
+    </div>
+    <div class="form-group">
+      <label class="form-label">Inactivity Threshold (days)</label>
+      <input class="form-input" id="biz-threshold" type="number" value="21" min="1">
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-ghost" onclick="closeModal('modal-add-biz')">Cancel</button>
+      <button class="btn btn-primary" onclick="saveBusiness()">Save Business</button>
+    </div>
+  </div>
+</div>
+
+<!-- ═══ ADD CUSTOMER MODAL ═══ -->
+<div class="modal-overlay" id="modal-add-customer">
+  <div class="modal">
+    <button class="modal-close" onclick="closeModal('modal-add-customer')">✕</button>
+    <div class="modal-title">Add Customer</div>
+    <div class="modal-sub">Manually add a customer to a business</div>
+    <div class="form-group">
+      <label class="form-label">Customer Name</label>
+      <input class="form-input" id="cust-name" placeholder="e.g. Sarah Adeyemi">
+    </div>
+    <div class="form-group">
+      <label class="form-label">Phone Number</label>
+      <input class="form-input" id="cust-phone" placeholder="+2348012345678">
+    </div>
+    <div class="form-group">
+      <label class="form-label">Business</label>
+      <select class="form-select" id="cust-biz"></select>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-ghost" onclick="closeModal('modal-add-customer')">Cancel</button>
+      <button class="btn btn-primary" onclick="saveCustomer()">Save Customer</button>
+    </div>
+  </div>
+</div>
+
+<!-- TOAST -->
+<div class="toast" id="toast"></div>
+
+<script>
+  const SUPABASE_URL = "https://arunjgianzgksezrllgh.supabase.co";
+  const SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImFydW5qZ2lhbnpna3NlenJsbGdoIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzQ4MTEyNjIsImV4cCI6MjA5MDM4NzI2Mn0.fdgHZExTtWBo8kGIqJglxvSFA7MUc17r6W6DifOHMA0";
+
+  const { createClient } = supabase;
+  const db = createClient(SUPABASE_URL, SUPABASE_KEY);
+
+  const AV_COLORS = ["#4F7FFF","#00D4B4","#FF6B8A","#8B5CF6","#F59E0B","#10B981","#EF4444","#06B6D4"];
+  const av = name => ({ bg: AV_COLORS[name.charCodeAt(0) % AV_COLORS.length], l: name[0].toUpperCase() });
+  const fmt = d => new Date(d).toLocaleDateString("en-NG", { day:"numeric", month:"short", year:"numeric" });
+
+  function toast(msg, ok=true) {
+    const t = document.getElementById("toast");
+    t.textContent = (ok ? "✓ " : "✕ ") + msg;
+    t.style.background = ok ? "#1A1D2E" : "#E84565";
+    t.style.display = "block";
+    setTimeout(() => t.style.display = "none", 3000);
+  }
+
+  function animCount(id, n) {
+    const el = document.getElementById(id);
+    if (!el) return;
+    let c = 0, step = Math.max(1, Math.ceil(n/20));
+    const t = setInterval(() => { c = Math.min(c+step, n); el.textContent = c; if(c>=n) clearInterval(t); }, 40);
+  }
+
+  // ─── NAVIGATION ───
+  function navTo(page, el) {
+    document.querySelectorAll(".page").forEach(p => p.classList.remove("active"));
+    document.querySelectorAll(".s-item").forEach(i => i.classList.remove("active"));
+    document.getElementById("page-" + page).classList.add("active");
+    if (el) el.classList.add("active");
+    loadPage(page);
+  }
+
+  function loadPage(page) {
+    if (page === "dashboard") loadAll();
+    else if (page === "customers") loadAllCustomers();
+    else if (page === "atrisk") loadByStatus("atrisk", "at_risk");
+    else if (page === "lost") loadByStatus("lost", "lost");
+    else if (page === "winback") loadWinbackMessages();
+    else if (page === "businesses") loadBusinessesFull();
+    else if (page === "settings") loadSettings();
+  }
+
+  // ─── GREETING ───
+  function setGreeting() {
+    const h = new Date().getHours();
+    const g = h < 12 ? "Good morning" : h < 17 ? "Good afternoon" : "Good evening";
+    document.getElementById("greeting-text").textContent = g + " 👋";
+    document.getElementById("greeting-date").textContent = new Date().toLocaleDateString("en-NG", { weekday:"long", year:"numeric", month:"long", day:"numeric" });
+  }
+
+  // ─── LOAD ALL (dashboard) ───
+  async function loadAll() {
+    await Promise.all([loadKPIs(), loadDashCustomers(), loadHealth()]);
+  }
+
+  async function loadKPIs() {
+    const [{ count: biz }, { count: active }, { count: lost }, { count: atrisk }, { count: msgs }] = await Promise.all([
+      db.from("businesses").select("*",{count:"exact",head:true}),
+      db.from("customers").select("*",{count:"exact",head:true}).eq("status","active"),
+      db.from("customers").select("*",{count:"exact",head:true}).eq("status","lost"),
+      db.from("customers").select("*",{count:"exact",head:true}).eq("status","at_risk"),
+      db.from("messages").select("*",{count:"exact",head:true}),
+    ]);
+    animCount("mc-biz", biz ?? 0);
+    animCount("mc-active", active ?? 0);
+    animCount("mc-lost", lost ?? 0);
+    animCount("mc-msgs", msgs ?? 0);
+    if ((lost??0) > 0) document.getElementById("sb-lost").style.display = "block";
+    if ((atrisk??0) > 0) document.getElementById("sb-atrisk").style.display = "block";
+  }
+
+  async function loadHealth() {
+    const [{ count: active }, { count: lost }, { count: atrisk }] = await Promise.all([
+      db.from("customers").select("*",{count:"exact",head:true}).eq("status","active"),
+      db.from("customers").select("*",{count:"exact",head:true}).eq("status","lost"),
+      db.from("customers").select("*",{count:"exact",head:true}).eq("status","at_risk"),
+    ]);
+    const a = active??0, l = lost??0, r = atrisk??0, total = a+l+r;
+    const ap = total>0 ? Math.round((a/total)*100) : 0;
+    const lp = total>0 ? Math.round((l/total)*100) : 0;
+    const rp = total>0 ? 100-ap-lp : 0;
+    const R = 46, cx = 58, cy = 58, circ = 2*Math.PI*R;
+    const arc = (pct, off, col) => `<circle cx="${cx}" cy="${cy}" r="${R}" fill="none" stroke="${col}" stroke-width="10" stroke-dasharray="${(pct/100)*circ} ${circ-(pct/100)*circ}" stroke-dashoffset="${-off*circ/100}" stroke-linecap="round" transform="rotate(-90 ${cx} ${cy})"/>`;
+    document.getElementById("health-panel").innerHTML = `
+      <svg width="116" height="116" viewBox="0 0 116 116" style="flex-shrink:0">
+        <circle cx="${cx}" cy="${cy}" r="${R}" fill="none" stroke="#F0F2F8" stroke-width="10"/>
+        ${arc(ap,0,"#00D4B4")}${arc(rp,ap,"#FFD166")}${arc(lp,ap+rp,"#FF6B8A")}
+        <text x="${cx}" y="${cy-4}" text-anchor="middle" font-family="Plus Jakarta Sans,sans-serif" font-size="18" font-weight="800" fill="#1A1D2E">${ap}%</text>
+        <text x="${cx}" y="${cy+12}" text-anchor="middle" font-family="Plus Jakarta Sans,sans-serif" font-size="9" fill="#9395A8">retained</text>
+      </svg>
+      <div class="donut-legend">
+        <div class="legend-item"><div class="legend-left"><div class="legend-dot" style="background:#00D4B4"></div><div class="legend-label">Active</div></div><div style="text-align:right"><div class="legend-val">${a}</div><div class="legend-pct">${ap}%</div></div></div>
+        <div class="legend-item"><div class="legend-left"><div class="legend-dot" style="background:#FFD166"></div><div class="legend-label">At Risk</div></div><div style="text-align:right"><div class="legend-val">${r}</div><div class="legend-pct">${rp}%</div></div></div>
+        <div class="legend-item"><div class="legend-left"><div class="legend-dot" style="background:#FF6B8A"></div><div class="legend-label">Lost</div></div><div style="text-align:right"><div class="legend-val">${l}</div><div class="legend-pct">${lp}%</div></div></div>
+        <div style="margin-top:8px;padding-top:10px;border-top:1px solid var(--border)"><div style="font-size:11px;color:var(--muted);margin-bottom:2px">Total tracked</div><div style="font-size:20px;font-weight:800;color:var(--text)">${total}</div></div>
+      </div>`;
+  }
+
+  async function loadDashCustomers() {
+    const { data } = await db.from("customers").select("*,businesses(name)").order("last_purchase_at",{ascending:false}).limit(5);
+    const el = document.getElementById("dash-customers");
+    if (!data?.length) { el.innerHTML = `<div class="empty-state"><div class="empty-icon">👥</div><div class="empty-text">No customers yet</div></div>`; return; }
+    el.innerHTML = customerTable(data);
+  }
+
+  async function loadAllCustomers() {
+    const { data } = await db.from("customers").select("*,businesses(name)").order("last_purchase_at",{ascending:false});
+    const el = document.getElementById("all-customers-panel");
+    if (!data?.length) { el.innerHTML = `<div class="empty-state"><div class="empty-icon">👥</div><div class="empty-text">No customers yet</div></div>`; return; }
+    el.innerHTML = customerTable(data);
+  }
+
+  async function loadByStatus(panelId, status) {
+    const { data } = await db.from("customers").select("*,businesses(name)").eq("status",status).order("last_purchase_at",{ascending:false});
+    const el = document.getElementById(panelId+"-panel");
+    if (!data?.length) { el.innerHTML = `<div class="empty-state"><div class="empty-icon">✅</div><div class="empty-text">No customers in this category</div></div>`; return; }
+    el.innerHTML = customerTable(data);
+  }
+
+  function customerTable(data) {
+    return `<div class="tbl-wrap"><table>
+      <thead><tr><th>Customer</th><th>Business</th><th>Last Visit</th><th>Status</th></tr></thead>
+      <tbody>${data.map(c => {
+        const a = av(c.name);
+        return `<tr><td><div class="td-name"><div class="td-av" style="background:${a.bg}">${a.l}</div><span class="td-primary">${c.name}</span></div></td>
+        <td>${c.businesses?.name??'—'}</td>
+        <td class="td-mono">${c.last_purchase_at?fmt(c.last_purchase_at):'—'}</td>
+        <td><span class="pill pill-${c.status}">${c.status}</span></td></tr>`;
+      }).join("")}</tbody></table></div>`;
+  }
+
+  async function loadWinbackMessages() {
+    const { data } = await db.from("messages").select("*,customers(name),businesses(name)").order("sent_at",{ascending:false}).limit(20);
+    const el = document.getElementById("winback-panel");
+    if (!data?.length) { el.innerHTML = `<div class="empty-state"><div class="empty-icon">💬</div><div class="empty-text">No win-back messages sent yet.<br>Run the win-back job to start.</div></div>`; return; }
+    el.innerHTML = data.map(m => {
+      const name = m.customers?.name??'Unknown';
+      const a = av(name);
+      return `<div class="feed-item">
+        <div class="feed-av" style="background:linear-gradient(135deg,${a.bg},#8B5CF6)">${a.l}</div>
+        <div class="feed-body">
+          <div class="feed-name">${name}${m.customer_returned?'<span class="returned-badge">Returned</span>':''}</div>
+          <div class="feed-sub">${(m.content??'').slice(0,70)}...</div>
+          <div class="feed-time">${fmt(m.sent_at)} · ${m.businesses?.name??''}</div>
+        </div>
+      </div>`;
+    }).join("");
+  }
+
+  async function loadBusinessesFull() {
+    const { data } = await db.from("businesses").select("*").order("id",{ascending:false});
+    const el = document.getElementById("biz-panel");
+    if (!data?.length) { el.innerHTML = `<div class="empty-state"><div class="empty-icon">🏪</div><div class="empty-text">No businesses registered</div></div>`; return; }
+    el.innerHTML = data.map(b => {
+      const a = av(b.name);
+      return `<div class="feed-item">
+        <div class="feed-av" style="background:${a.bg}">${a.l}</div>
+        <div class="feed-body">
+          <div class="feed-name">${b.name}</div>
+          <div class="feed-sub">${b.category} · ${b.inactivity_threshold_days}-day threshold</div>
+          <div class="feed-time">${b.whatsapp_number}</div>
+        </div>
+        <span class="pill ${b.is_active?'pill-on':'pill-lost'}">${b.is_active?'Active':'Off'}</span>
+      </div>`;
+    }).join("");
+  }
+
+  // ─── SEARCH ───
+  let allCustomers = [];
+  async function preloadCustomers() {
+    const { data } = await db.from("customers").select("*,businesses(name)").order("name");
+    allCustomers = data ?? [];
+  }
+
+  function onSearch(q) {
+    const el = document.getElementById("search-results");
+    if (!q.trim()) { el.innerHTML = ""; el.classList.remove("open"); return; }
+    const results = allCustomers.filter(c => c.name.toLowerCase().includes(q.toLowerCase()) || (c.businesses?.name||"").toLowerCase().includes(q.toLowerCase()));
+    if (!results.length) { el.innerHTML = `<div class="sr-empty">No customers found</div>`; el.classList.add("open"); return; }
+    el.innerHTML = results.slice(0,6).map(c => {
+      const a = av(c.name);
+      return `<div class="sr-item" onclick="selectCustomer('${c.name}')">
+        <div class="td-av" style="background:${a.bg};width:28px;height:28px;border-radius:7px;font-size:11px;font-weight:800;color:#fff;display:flex;align-items:center;justify-content:center">${a.l}</div>
+        <div><div class="sr-name">${c.name}</div><div class="sr-sub">${c.businesses?.name??''} · <span class="pill pill-${c.status}" style="padding:1px 6px">${c.status}</span></div></div>
+      </div>`;
+    }).join("");
+    el.classList.add("open");
+  }
+
+  function showResults() { if (document.getElementById("search-input").value) document.getElementById("search-results").classList.add("open"); }
+  function hideResults() { document.getElementById("search-results").classList.remove("open"); }
+  function selectCustomer(name) {
+    document.getElementById("search-input").value = name;
+    hideResults();
+    navTo("customers", document.querySelectorAll(".s-item")[1]);
+  }
+
+  // ─── MODALS ───
+  function openModal(id) { document.getElementById(id).classList.add("open"); }
+  function closeModal(id) { document.getElementById(id).classList.remove("open"); }
+
+  async function openAddBusiness() {
+    document.getElementById("biz-name").value = "";
+    document.getElementById("biz-phone").value = "";
+    document.getElementById("biz-threshold").value = "21";
+    openModal("modal-add-biz");
+  }
+
+  async function openAddCustomer() {
+    document.getElementById("cust-name").value = "";
+    document.getElementById("cust-phone").value = "";
+    const { data } = await db.from("businesses").select("id,name");
+    const sel = document.getElementById("cust-biz");
+    sel.innerHTML = (data??[]).map(b => `<option value="${b.id}">${b.name}</option>`).join("");
+    openModal("modal-add-customer");
+  }
+
+  async function saveBusiness() {
+    const name = document.getElementById("biz-name").value.trim();
+    const phone = document.getElementById("biz-phone").value.trim();
+    const category = document.getElementById("biz-category").value;
+    const days = parseInt(document.getElementById("biz-threshold").value) || 21;
+    if (!name || !phone) { toast("Please fill all fields", false); return; }
+    const { error } = await db.from("businesses").insert({ name, whatsapp_number: phone, category, inactivity_threshold_days: days, is_active: true });
+    if (error) { toast("Error: " + error.message, false); return; }
+    closeModal("modal-add-biz");
+    toast("Business added successfully!");
+    loadAll();
+    preloadCustomers();
+  }
+
+  async function saveCustomer() {
+    const name = document.getElementById("cust-name").value.trim();
+    const phone = document.getElementById("cust-phone").value.trim() || "unknown";
+    const biz_id = document.getElementById("cust-biz").value;
+    if (!name) { toast("Please enter a customer name", false); return; }
+    const { error } = await db.from("customers").insert({ name, phone_number: phone, business_id: parseInt(biz_id), last_purchase_at: new Date().toISOString(), status: "active" });
+    if (error) { toast("Error: " + error.message, false); return; }
+    closeModal("modal-add-customer");
+    toast("Customer added successfully!");
+    loadAll();
+    preloadCustomers();
+  }
+
+  // ─── SETTINGS ───
+  async function loadSettings() {
+    const { data } = await db.from("businesses").select("*").order("id",{ascending:false});
+    const el = document.getElementById("settings-content");
+    if (!data?.length) { el.innerHTML = `<div class="card" style="padding:20px"><div class="empty-state"><div class="empty-icon">🏪</div><div class="empty-text">No businesses yet. Add one to get started.</div></div></div>`; return; }
+    el.innerHTML = data.map(b => `
+      <div class="card" style="margin-bottom:14px;padding:20px">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px">
+          <div style="font-size:14px;font-weight:800;color:var(--text)">${b.name}</div>
+          <span class="pill pill-${b.is_active?"on":"lost"}">${b.is_active?"Active":"Inactive"}</span>
+        </div>
+        <div class="form-group"><label class="form-label">Business Name</label><input class="form-input" id="s-name-${b.id}" value="${b.name}"></div>
+        <div class="form-group"><label class="form-label">Category</label><select class="form-select" id="s-cat-${b.id}"><option ${b.category==="Salon / Beauty"?"selected":""}>Salon / Beauty</option><option ${b.category==="Pharmacy / Clinic"?"selected":""}>Pharmacy / Clinic</option><option ${b.category==="Restaurant / Food"?"selected":""}>Restaurant / Food</option><option ${b.category==="Supermarket / Shop"?"selected":""}>Supermarket / Shop</option><option ${b.category==="Other"?"selected":""}>Other</option></select></div>
+        <div class="form-group"><label class="form-label">WhatsApp Number</label><input class="form-input" id="s-phone-${b.id}" value="${b.whatsapp_number}"></div>
+        <div class="form-group"><label class="form-label">Inactivity Threshold (days)</label><input class="form-input" type="number" id="s-days-${b.id}" value="${b.inactivity_threshold_days}" min="1"></div>
+        <div style="display:flex;gap:10px;margin-top:4px">
+          <button class="btn btn-primary btn-sm" onclick="updateBusiness(${b.id})">Save Changes</button>
+          <button class="btn btn-ghost btn-sm" onclick="toggleBusiness(${b.id},${b.is_active})">${b.is_active?"Deactivate":"Activate"}</button>
+        </div>
+      </div>`).join("");
+  }
+
+  async function updateBusiness(id) {
+    const name = document.getElementById("s-name-"+id).value.trim();
+    const category = document.getElementById("s-cat-"+id).value;
+    const phone = document.getElementById("s-phone-"+id).value.trim();
+    const days = parseInt(document.getElementById("s-days-"+id).value)||21;
+    const { error } = await db.from("businesses").update({name,category,whatsapp_number:phone,inactivity_threshold_days:days}).eq("id",id);
+    if (error) { toast("Error: "+error.message, false); return; }
+    toast("Business updated!");
+    loadSettings();
+  }
+
+  async function toggleBusiness(id, current) {
+    await db.from("businesses").update({is_active:!current}).eq("id",id);
+    toast(current ? "Business deactivated" : "Business activated");
+    loadSettings();
+  }
+
+  // ─── WIN-BACK TRIGGER ───
+  async function triggerWinback(btn) {
+    const orig = btn.textContent;
+    btn.textContent = "Running...";
+    btn.disabled = true;
+    try {
+      const res = await fetch("/winback");
+      const data = await res.json();
+      toast(data.success ? "Win-back job completed!" : "Job failed");
+      setTimeout(() => { btn.textContent = orig; btn.disabled = false; loadAll(); }, 2000);
+    } catch {
+      toast("Failed to trigger win-back", false);
+      setTimeout(() => { btn.textContent = orig; btn.disabled = false; }, 2000);
+    }
+  }
+
+  // Close modals on overlay click
+  document.querySelectorAll(".modal-overlay").forEach(o => o.addEventListener("click", e => { if(e.target===o) o.classList.remove("open"); }));
+
+  // ─── INIT ───
+  setGreeting();
+  loadAll();
+  preloadCustomers();
+</script>
+</body>
+</html>

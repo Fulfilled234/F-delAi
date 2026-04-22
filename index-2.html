@@ -1,0 +1,801 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0" maximum-scale=1.0">>
+<title>Fidel— Win Back Lost Customers Automatically</title>
+<meta name="description" content="Fidelhelps Nigerian businesses automatically win back lost customers via personalized WhatsApp messages powered by AI.">
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,300;0,9..144,700;0,9..144,900;1,9..144,700&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+*, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+
+:root {
+  --bg: #FAFAF8;
+  --dark: #0F1117;
+  --card: #FFFFFF;
+  --border: #E8E8E4;
+  --text: #0F1117;
+  --muted: #8A8A82;
+  --soft: #5A5A52;
+  --green: #00C896;
+  --green-d: #00A87E;
+  --amber: #F5A623;
+  --blue: #2563EB;
+  --whatsapp: #25D366;
+}
+
+html { font-size: 15px; scroll-behavior: smooth; }
+
+body {
+  background: var(--bg);
+  color: var(--text);
+  font-family: 'Plus Jakarta Sans', sans-serif;
+  overflow-x: hidden;
+}
+
+/* ── NAV ── */
+nav {
+  position: fixed; top: 0; left: 0; right: 0;
+  z-index: 100;
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 18px 40px;
+  background: rgba(250,250,248,0.85);
+  backdrop-filter: blur(16px);
+  border-bottom: 1px solid rgba(0,0,0,0.06);
+}
+
+.nav-logo {
+  display: flex; align-items: center; gap: 10px;
+  font-family: 'Fraunces', serif;
+  font-size: 22px; font-weight: 900;
+  color: var(--text); text-decoration: none;
+}
+
+.nav-logo-icon {
+  width: 34px; height: 34px;
+  background: var(--green);
+  border-radius: 9px;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 16px;
+}
+
+.nav-links {
+  display: flex; align-items: center; gap: 32px;
+  list-style: none;
+}
+
+.nav-links a {
+  font-size: 14px; font-weight: 500;
+  color: var(--soft); text-decoration: none;
+  transition: color 0.15s;
+}
+.nav-links a:hover { color: var(--text); }
+
+.nav-cta {
+  display: flex; align-items: center; gap: 10px;
+}
+
+.btn {
+  display: inline-flex; align-items: center; gap: 7px;
+  padding: 10px 20px; border-radius: 10px;
+  font-family: 'Plus Jakarta Sans', sans-serif;
+  font-size: 14px; font-weight: 700;
+  cursor: pointer; border: none; text-decoration: none;
+  transition: all 0.18s;
+}
+
+.btn-outline {
+  background: transparent;
+  border: 1.5px solid var(--border);
+  color: var(--soft);
+}
+.btn-outline:hover { border-color: var(--text); color: var(--text); }
+
+.btn-primary {
+  background: var(--green);
+  color: #fff;
+  box-shadow: 0 4px 14px rgba(0,200,150,0.35);
+}
+.btn-primary:hover { background: var(--green-d); transform: translateY(-1px); box-shadow: 0 6px 20px rgba(0,200,150,0.4); }
+
+.btn-dark {
+  background: var(--dark);
+  color: #fff;
+  box-shadow: 0 4px 14px rgba(0,0,0,0.2);
+}
+.btn-dark:hover { background: #1e2130; transform: translateY(-1px); }
+
+.btn-lg { padding: 14px 28px; font-size: 15px; border-radius: 12px; }
+.btn-whatsapp { background: var(--whatsapp); color: #fff; box-shadow: 0 4px 14px rgba(37,211,102,0.35); }
+.btn-whatsapp:hover { background: #20c05a; transform: translateY(-1px); }
+
+/* ── HERO ── */
+.hero {
+  min-height: 100vh;
+  display: flex; flex-direction: column;
+  align-items: center; justify-content: center;
+  text-align: center;
+  padding: 120px 24px 80px;
+  position: relative;
+  overflow: hidden;
+}
+
+.hero-bg {
+  position: absolute; inset: 0; z-index: 0;
+  background:
+    radial-gradient(ellipse 70% 50% at 50% 0%, rgba(0,200,150,0.08) 0%, transparent 60%),
+    radial-gradient(ellipse 40% 30% at 80% 80%, rgba(245,166,35,0.06) 0%, transparent 50%);
+}
+
+/* Grid texture */
+.hero-grid {
+  position: absolute; inset: 0; z-index: 0; opacity: 0.35;
+  background-image:
+    linear-gradient(rgba(0,0,0,0.06) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(0,0,0,0.06) 1px, transparent 1px);
+  background-size: 48px 48px;
+  mask-image: radial-gradient(ellipse 80% 80% at 50% 50%, black 30%, transparent 80%);
+}
+
+.hero-content { position: relative; z-index: 2; max-width: 780px; }
+
+.hero-badge {
+  display: inline-flex; align-items: center; gap: 7px;
+  background: rgba(0,200,150,0.1);
+  border: 1px solid rgba(0,200,150,0.25);
+  border-radius: 999px;
+  padding: 6px 16px; margin-bottom: 28px;
+  font-size: 13px; font-weight: 600; color: var(--green-d);
+}
+
+.hero-badge-dot {
+  width: 6px; height: 6px;
+  background: var(--green);
+  border-radius: 50%;
+  animation: blink 2s infinite;
+}
+@keyframes blink { 0%,100%{opacity:1} 50%{opacity:0.3} }
+
+.hero-title {
+  font-family: 'Fraunces', serif;
+  font-size: clamp(38px, 7vw, 68px);
+  font-weight: 900;
+  line-height: 1.08;
+  letter-spacing: -2px;
+  margin-bottom: 22px;
+  color: var(--text);
+}
+
+.hero-title em {
+  font-style: italic;
+  color: var(--green);
+}
+
+.hero-sub {
+  font-size: clamp(15px, 2.5vw, 18px);
+  color: var(--soft);
+  line-height: 1.65;
+  max-width: 560px;
+  margin: 0 auto 36px;
+  font-weight: 400;
+}
+
+.hero-actions {
+  display: flex; align-items: center; justify-content: center;
+  gap: 12px; flex-wrap: wrap; margin-bottom: 48px;
+}
+
+.hero-social-proof {
+  display: flex; align-items: center; justify-content: center;
+  gap: 10px; flex-wrap: wrap;
+}
+
+.proof-avatars {
+  display: flex;
+}
+
+.proof-av {
+  width: 32px; height: 32px;
+  border-radius: 50%;
+  border: 2px solid var(--bg);
+  margin-left: -8px;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 12px; font-weight: 800; color: #fff;
+}
+
+.proof-av:first-child { margin-left: 0; }
+
+.proof-text { font-size: 13px; color: var(--muted); }
+.proof-text strong { color: var(--text); }
+
+/* ── WHATSAPP MOCKUP ── */
+.phone-wrap {
+  position: relative; z-index: 2;
+  display: flex; justify-content: center;
+  margin-top: 16px; margin-bottom: 80px;
+}
+
+.phone {
+  width: 280px;
+  background: #111;
+  border-radius: 36px;
+  padding: 14px;
+  box-shadow: 0 40px 80px rgba(0,0,0,0.25), 0 0 0 1px rgba(255,255,255,0.05);
+  position: relative;
+}
+
+.phone-screen {
+  background: #ECE5DD;
+  border-radius: 26px;
+  overflow: hidden;
+  min-height: 400px;
+}
+
+.wa-header {
+  background: #075E54;
+  padding: 12px 14px;
+  display: flex; align-items: center; gap: 10px;
+}
+
+.wa-av {
+  width: 36px; height: 36px;
+  background: var(--green);
+  border-radius: 50%;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 14px; font-weight: 800; color: #fff;
+  flex-shrink: 0;
+}
+
+.wa-name { font-size: 14px; font-weight: 700; color: #fff; }
+.wa-status { font-size: 11px; color: rgba(255,255,255,0.65); }
+
+.wa-body { padding: 12px 10px; display: flex; flex-direction: column; gap: 8px; }
+
+.wa-bubble {
+  background: #fff;
+  border-radius: 0 10px 10px 10px;
+  padding: 10px 12px;
+  font-size: 12.5px;
+  color: #111;
+  line-height: 1.5;
+  max-width: 90%;
+  box-shadow: 0 1px 2px rgba(0,0,0,0.1);
+  position: relative;
+  animation: bubbleIn 0.4s ease both;
+}
+
+.wa-bubble.out {
+  background: #DCF8C6;
+  border-radius: 10px 0 10px 10px;
+  align-self: flex-end;
+  animation-delay: 0.6s;
+}
+
+@keyframes bubbleIn {
+  from { opacity: 0; transform: translateY(8px) scale(0.97); }
+  to { opacity: 1; transform: none; }
+}
+
+.wa-time { font-size: 10px; color: #999; text-align: right; margin-top: 3px; }
+.wa-ai-tag {
+  display: inline-block;
+  background: rgba(0,200,150,0.12);
+  color: var(--green-d);
+  font-size: 9px; font-weight: 700;
+  padding: 2px 6px; border-radius: 4px;
+  margin-bottom: 4px;
+  text-transform: uppercase; letter-spacing: 0.05em;
+}
+
+/* ── SECTION ── */
+section { padding: 80px 24px; max-width: 1100px; margin: 0 auto; }
+
+.section-badge {
+  display: inline-flex; align-items: center; gap: 6px;
+  font-size: 12px; font-weight: 700;
+  text-transform: uppercase; letter-spacing: 0.1em;
+  color: var(--green-d); margin-bottom: 14px;
+}
+
+.section-title {
+  font-family: 'Fraunces', serif;
+  font-size: clamp(28px, 4vw, 42px);
+  font-weight: 900; letter-spacing: -1px;
+  line-height: 1.15; margin-bottom: 16px;
+}
+
+.section-sub {
+  font-size: 16px; color: var(--soft);
+  line-height: 1.65; max-width: 520px;
+}
+
+/* ── HOW IT WORKS ── */
+.how-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 20px; margin-top: 52px;
+}
+
+.how-card {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: 18px;
+  padding: 28px 24px;
+  position: relative;
+  transition: transform 0.2s, box-shadow 0.2s;
+}
+
+.how-card:hover { transform: translateY(-3px); box-shadow: 0 12px 36px rgba(0,0,0,0.08); }
+
+.how-num {
+  font-family: 'Fraunces', serif;
+  font-size: 52px; font-weight: 900;
+  color: rgba(0,0,0,0.06);
+  line-height: 1; margin-bottom: 16px;
+}
+
+.how-icon {
+  width: 44px; height: 44px;
+  border-radius: 12px;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 20px; margin-bottom: 14px;
+}
+
+.how-title { font-size: 15px; font-weight: 800; margin-bottom: 8px; }
+.how-desc { font-size: 13px; color: var(--soft); line-height: 1.6; }
+
+/* ── FEATURES ── */
+.features-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 16px; margin-top: 48px;
+}
+
+.feature-card {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  padding: 24px;
+  display: flex; gap: 16px;
+  transition: transform 0.2s;
+}
+.feature-card:hover { transform: translateY(-2px); }
+
+.feature-icon {
+  width: 42px; height: 42px; flex-shrink: 0;
+  border-radius: 11px;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 19px;
+}
+
+.fi-green { background: rgba(0,200,150,0.1); }
+.fi-amber { background: rgba(245,166,35,0.12); }
+.fi-blue { background: rgba(37,99,235,0.1); }
+.fi-dark { background: rgba(15,17,23,0.07); }
+
+.feature-title { font-size: 14px; font-weight: 800; margin-bottom: 5px; }
+.feature-desc { font-size: 13px; color: var(--soft); line-height: 1.55; }
+
+/* ── PRICING ── */
+.pricing-wrap {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 20px; margin-top: 52px; max-width: 700px; margin-left: auto; margin-right: auto;
+}
+
+.pricing-card {
+  background: var(--card);
+  border: 1.5px solid var(--border);
+  border-radius: 20px;
+  padding: 32px 28px;
+  position: relative;
+  transition: transform 0.2s;
+}
+
+.pricing-card:hover { transform: translateY(-2px); }
+
+.pricing-card.featured {
+  background: var(--dark);
+  border-color: var(--dark);
+  color: #fff;
+}
+
+.pricing-popular {
+  position: absolute; top: -12px; left: 50%; transform: translateX(-50%);
+  background: var(--green);
+  color: #fff; font-size: 11px; font-weight: 800;
+  padding: 4px 14px; border-radius: 999px;
+  text-transform: uppercase; letter-spacing: 0.08em;
+  white-space: nowrap;
+}
+
+.pricing-plan { font-size: 13px; font-weight: 700; color: var(--muted); margin-bottom: 10px; text-transform: uppercase; letter-spacing: 0.08em; }
+.pricing-card.featured .pricing-plan { color: rgba(255,255,255,0.5); }
+
+.pricing-price {
+  font-family: 'Fraunces', serif;
+  font-size: 42px; font-weight: 900; letter-spacing: -1.5px;
+  line-height: 1; margin-bottom: 4px;
+}
+
+.pricing-period { font-size: 13px; color: var(--muted); margin-bottom: 24px; }
+.pricing-card.featured .pricing-period { color: rgba(255,255,255,0.45); }
+
+.pricing-features { list-style: none; display: flex; flex-direction: column; gap: 10px; margin-bottom: 28px; }
+.pricing-features li { display: flex; align-items: flex-start; gap: 8px; font-size: 13px; color: var(--soft); }
+.pricing-card.featured .pricing-features li { color: rgba(255,255,255,0.75); }
+.pricing-features li::before { content: '✓'; color: var(--green); font-weight: 800; flex-shrink: 0; }
+
+.pricing-trial { font-size: 12px; color: var(--muted); text-align: center; margin-top: 12px; }
+.pricing-card.featured .pricing-trial { color: rgba(255,255,255,0.4); }
+
+/* ── TESTIMONIALS ── */
+.testimonials-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 16px; margin-top: 48px;
+}
+
+.testi-card {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  padding: 22px;
+}
+
+.testi-stars { font-size: 14px; margin-bottom: 12px; }
+.testi-text { font-size: 13px; color: var(--soft); line-height: 1.6; margin-bottom: 16px; font-style: italic; }
+.testi-author { display: flex; align-items: center; gap: 10px; }
+.testi-av { width: 34px; height: 34px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 13px; font-weight: 800; color: #fff; }
+.testi-name { font-size: 13px; font-weight: 700; }
+.testi-biz { font-size: 11px; color: var(--muted); }
+
+/* ── CTA SECTION ── */
+.cta-section {
+  background: var(--dark);
+  border-radius: 28px;
+  padding: 72px 40px;
+  text-align: center;
+  position: relative;
+  overflow: hidden;
+  margin: 0 24px 80px;
+}
+
+.cta-glow {
+  position: absolute; top: -80px; left: 50%; transform: translateX(-50%);
+  width: 500px; height: 300px;
+  background: radial-gradient(ellipse, rgba(0,200,150,0.2) 0%, transparent 65%);
+  pointer-events: none;
+}
+
+.cta-title {
+  font-family: 'Fraunces', serif;
+  font-size: clamp(28px, 4vw, 48px);
+  font-weight: 900; letter-spacing: -1.5px;
+  color: #fff; margin-bottom: 16px; position: relative; z-index: 2;
+}
+
+.cta-title em { font-style: italic; color: var(--green); }
+
+.cta-sub { font-size: 16px; color: rgba(255,255,255,0.5); margin-bottom: 36px; position: relative; z-index: 2; }
+
+.cta-actions { display: flex; align-items: center; justify-content: center; gap: 12px; flex-wrap: wrap; position: relative; z-index: 2; }
+
+/* ── FOOTER ── */
+footer {
+  border-top: 1px solid var(--border);
+  padding: 32px 40px;
+  display: flex; align-items: center; justify-content: space-between;
+  flex-wrap: wrap; gap: 16px;
+}
+
+.footer-logo {
+  font-family: 'Fraunces', serif;
+  font-size: 18px; font-weight: 900; color: var(--text);
+}
+
+.footer-copy { font-size: 13px; color: var(--muted); }
+
+.footer-links { display: flex; gap: 24px; }
+.footer-links a { font-size: 13px; color: var(--muted); text-decoration: none; }
+.footer-links a:hover { color: var(--text); }
+
+/* ── ANIMATIONS ── */
+@keyframes fadeUp {
+  from { opacity: 0; transform: translateY(20px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.hero-content { animation: fadeUp 0.6s ease both; }
+.hero-badge { animation: fadeUp 0.5s ease both; }
+
+/* ── RESPONSIVE ── */
+@media (max-width: 768px) {
+  nav { padding: 14px 20px; }
+  .nav-links { display: none; }
+  .hero { padding: 100px 20px 60px; }
+  .how-grid { grid-template-columns: 1fr; }
+  .features-grid { grid-template-columns: 1fr; }
+  .pricing-wrap { grid-template-columns: 1fr; }
+  .testimonials-grid { grid-template-columns: 1fr; }
+  .cta-section { padding: 48px 24px; margin: 0 16px 60px; }
+  footer { padding: 24px 20px; flex-direction: column; text-align: center; }
+  .footer-links { justify-content: center; }
+  section { padding: 60px 20px; }
+}
+
+/* ── SCROLL REVEAL ── */
+.reveal {
+  opacity: 0; transform: translateY(24px);
+  transition: opacity 0.6s ease, transform 0.6s ease;
+}
+.reveal.visible { opacity: 1; transform: none; }
+</style>
+</head>
+<body>
+
+<!-- NAV -->
+<nav>
+  <a class="nav-logo" href="/">
+    <div class="nav-logo-icon">🔁</div>
+    Fidel
+  </a>
+  <ul class="nav-links">
+    <li><a href="#how">How it works</a></li>
+    <li><a href="#features">Features</a></li>
+    <li><a href="#pricing">Pricing</a></li>
+  </ul>
+  <div class="nav-cta">
+    <a class="btn btn-outline" href="/dashboard">Dashboard</a>
+    <a class="btn btn-primary" href="#pricing">Activate</a>
+  </div>
+</nav>
+
+<!-- HERO -->
+<div class="hero">
+  <div class="hero-bg"></div>
+  <div class="hero-grid"></div>
+  <div class="hero-content">
+    <div class="hero-badge">
+      <div class="hero-badge-dot"></div>
+      Now live in Nigeria
+    </div>
+    <h1 class="hero-title">
+      Your customers left.<br>
+      <em>AI brings them back.</em>
+    </h1>
+    <p class="hero-sub">
+      Fidel automatically detects when a customer goes silent — and sends them a personalized WhatsApp message to win them back. Zero effort. Real revenue.
+    </p>
+    <div class="hero-actions">
+      <a class="btn btn-primary btn-lg" href="#pricing">Start free — 14 days</a>
+      <a class="btn btn-outline btn-lg" href="/dashboard">View Dashboard →</a>
+    </div>
+    <div class="hero-social-proof">
+      <div class="proof-avatars">
+        <div class="proof-av" style="background:#00C896">A</div>
+        <div class="proof-av" style="background:#F5A623">K</div>
+        <div class="proof-av" style="background:#2563EB">T</div>
+        <div class="proof-av" style="background:#8B5CF6">F</div>
+      </div>
+      <div class="proof-text">Trusted by <strong>Nigerian SMEs</strong> — salons, pharmacies, restaurants</div>
+    </div>
+  </div>
+</div>
+
+<!-- PHONE MOCKUP -->
+<div class="phone-wrap reveal">
+  <div class="phone">
+    <div class="phone-screen">
+      <div class="wa-header">
+        <div class="wa-av">G</div>
+        <div>
+          <div class="wa-name">Glam Hair Studio</div>
+          <div class="wa-status">online</div>
+        </div>
+      </div>
+      <div class="wa-body">
+        <div class="wa-bubble">
+          <div class="wa-ai-tag">✨ AI Generated</div>
+          Hi Sarah! 💇‍♀️ It's been a while since your last visit at Glam Hair Studio and we genuinely miss you!<br><br>
+          We've set aside a special offer just for you — book any style this week and get a complimentary treatment. 🌟<br><br>
+          Tap below to book your spot 👇
+          <div class="wa-time">9:02 AM ✓✓</div>
+        </div>
+        <div class="wa-bubble out">
+          Omg yes! I'll come Saturday 🙌
+          <div class="wa-time">9:14 AM ✓✓</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- HOW IT WORKS -->
+<section id="how">
+  <div class="reveal">
+    <div class="section-badge">✦ How it works</div>
+    <div class="section-title">Three steps.<br>Customers come back.</div>
+    <div class="section-sub">No complex setup. No chasing customers manually. Fidel does it all.</div>
+  </div>
+  <div class="how-grid">
+    <div class="how-card reveal">
+      <div class="how-num">01</div>
+      <div class="how-icon fi-green">📱</div>
+      <div class="how-title">Log customer visits</div>
+      <div class="how-desc">Send "Sarah visited" on WhatsApp to Retain. Every visit is tracked automatically in your dashboard.</div>
+    </div>
+    <div class="how-card reveal">
+      <div class="how-num">02</div>
+      <div class="how-icon fi-amber">🤖</div>
+      <div class="how-title">AI detects silence</div>
+      <div class="how-desc">When a customer hasn't shown up past your set threshold, Fidel flags them and generates a personalized win-back message using Gemini AI.</div>
+    </div>
+    <div class="how-card reveal">
+      <div class="how-num">03</div>
+      <div class="how-icon" style="background:rgba(37,211,102,0.12)">💬</div>
+      <div class="how-title">WhatsApp brings them back</div>
+      <div class="how-desc">The message is sent directly to the customer on WhatsApp. When they return, Fidel marks them as recovered.</div>
+    </div>
+  </div>
+</section>
+
+<!-- FEATURES -->
+<section id="features" style="background:transparent">
+  <div class="reveal">
+    <div class="section-badge">✦ Features</div>
+    <div class="section-title">Everything your business needs<br>to retain customers.</div>
+  </div>
+  <div class="features-grid reveal">
+    <div class="feature-card">
+      <div class="feature-icon fi-green">🤖</div>
+      <div>
+        <div class="feature-title">Gemini AI Messages</div>
+        <div class="feature-desc">Every win-back message is uniquely generated by Google Gemini — warm, human, and tailored to your customer and business category.</div>
+      </div>
+    </div>
+    <div class="feature-card">
+      <div class="feature-icon" style="background:rgba(37,211,102,0.12)">💬</div>
+      <div>
+        <div class="feature-title">WhatsApp Native</div>
+        <div class="feature-desc">No app download required. Your customers get messages directly in WhatsApp — the app they already use every day.</div>
+      </div>
+    </div>
+    <div class="feature-card">
+      <div class="feature-icon fi-amber">📊</div>
+      <div>
+        <div class="feature-title">Customer Health Dashboard</div>
+        <div class="feature-desc">See exactly who is active, at risk, or lost. Track your retention rate and recovered revenue in real time.</div>
+      </div>
+    </div>
+    <div class="feature-card">
+      <div class="feature-icon fi-blue">⚡</div>
+      <div>
+        <div class="feature-title">Daily Auto-Run</div>
+        <div class="feature-desc">Fidel runs automatically every morning at 9AM. No manual work. Just check your dashboard and watch customers come back.</div>
+      </div>
+    </div>
+    <div class="feature-card">
+      <div class="feature-icon fi-dark">🏪</div>
+      <div>
+        <div class="feature-title">Multi-Business Support</div>
+        <div class="feature-desc">Manage multiple businesses from one account. Each business has its own customer list and win-back settings.</div>
+      </div>
+    </div>
+    <div class="feature-card">
+      <div class="feature-icon fi-green">🇳🇬</div>
+      <div>
+        <div class="feature-title">Built for Nigerian SMEs</div>
+        <div class="feature-desc">Designed specifically for salons, pharmacies, restaurants, and shops in Nigeria. Pricing in Naira. Tone that resonates locally.</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- TESTIMONIALS -->
+<section>
+  <div class="reveal">
+    <div class="section-badge">✦ What businesses say</div>
+    <div class="section-title">Real businesses.<br>Real results.</div>
+  </div>
+  <div class="testimonials-grid reveal">
+    <div class="testi-card">
+      <div class="testi-stars">⭐⭐⭐⭐⭐</div>
+      <div class="testi-text">"I got back 4 customers in the first week. One of them spent ₦18,000 on a full treatment. This thing pays for itself."</div>
+      <div class="testi-author">
+        <div class="testi-av" style="background:#00C896">A</div>
+        <div><div class="testi-name">Adaeze O.</div><div class="testi-biz">Glam Hair Studio, Lagos</div></div>
+      </div>
+    </div>
+    <div class="testi-card">
+      <div class="testi-stars">⭐⭐⭐⭐⭐</div>
+      <div class="testi-text">"I used to call customers manually to remind them. Now Fidel does it automatically and the messages are way better than what I would write."</div>
+      <div class="testi-author">
+        <div class="testi-av" style="background:#F5A623">K</div>
+        <div><div class="testi-name">Kunle A.</div><div class="testi-biz">Apex Pharmacy, Abuja</div></div>
+      </div>
+    </div>
+    <div class="testi-card">
+      <div class="testi-stars">⭐⭐⭐⭐⭐</div>
+      <div class="testi-text">"My salon was losing customers silently and I didn't even know. Fidel showed me exactly who was gone — and brought most of them back."</div>
+      <div class="testi-author">
+        <div class="testi-av" style="background:#8B5CF6">T</div>
+        <div><div class="testi-name">Temi B.</div><div class="testi-biz">Beauty By Temi, Ibadan</div></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- PRICING -->
+<section id="pricing">
+  <div class="reveal" style="text-align:center">
+    <div class="section-badge" style="justify-content:center">✦ Pricing</div>
+    <div class="section-title">Simple, honest pricing.</div>
+    <div class="section-sub" style="margin:0 auto">Start free. Pay only when you see results.</div>
+  </div>
+  <div class="pricing-wrap reveal">
+    <div class="pricing-card">
+      <div class="pricing-plan">Free Trial</div>
+      <div class="pricing-price">₦0</div>
+      <div class="pricing-period">for 14 days</div>
+      <ul class="pricing-features">
+        <li>1 business</li>
+        <li>Up to 50 customers</li>
+        <li>AI win-back messages</li>
+        <li>WhatsApp integration</li>
+        <li>Dashboard access</li>
+      </ul>
+      <a class="btn btn-outline" href="#" style="width:100%;justify-content:center">Start Free Trial</a>
+      <div class="pricing-trial">No credit card required</div>
+    </div>
+    <div class="pricing-card featured">
+      <div class="pricing-popular">Most Popular</div>
+      <div class="pricing-plan">Pro</div>
+      <div class="pricing-price" style="color:#fff">₦5,000</div>
+      <div class="pricing-period">per month</div>
+      <ul class="pricing-features">
+        <li>Unlimited businesses</li>
+        <li>Unlimited customers</li>
+        <li>AI win-back messages</li>
+        <li>Priority WhatsApp sending</li>
+        <li>Advanced dashboard</li>
+        <li>Daily auto win-back</li>
+      </ul>
+      <a class="btn btn-primary" href="#" style="width:100%;justify-content:center">Get Pro — ₦5,000/mo</a>
+      <div class="pricing-trial">Cancel anytime</div>
+    </div>
+  </div>
+</section>
+
+<!-- CTA -->
+<div class="cta-section reveal">
+  <div class="cta-glow"></div>
+  <div class="cta-title">Stop losing customers<br><em>silently.</em></div>
+  <div class="cta-sub">Join Nigerian businesses using Fidel to automatically win back customers every day.</div>
+  <div class="cta-actions">
+    <a class="btn btn-primary btn-lg" href="#pricing">Start for free →</a>
+    <a class="btn btn-whatsapp btn-lg" href="https://wa.me/14155238886" target="_blank">💬 Try on WhatsApp</a>
+  </div>
+</div>
+
+<!-- FOOTER -->
+<footer>
+  <div class="footer-logo">Retain.</div>
+  <div class="footer-copy">© 2026 Retain. Built in Nigeria 🇳🇬</div>
+  <div class="footer-links">
+    <a href="/dashboard">Dashboard</a>
+    <a href="#pricing">Pricing</a>
+    <a href="#how">How it works</a>
+  </div>
+</footer>
+
+<script>
+  // Scroll reveal
+  const observer = new IntersectionObserver(entries => {
+    entries.forEach(e => { if (e.isIntersecting) { e.target.classList.add("visible"); observer.unobserve(e.target); } });
+  }, { threshold: 0.1 });
+
+  document.querySelectorAll(".reveal").forEach(el => observer.observe(el));
+</script>
+</body>
+</html>
