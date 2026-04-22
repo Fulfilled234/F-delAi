@@ -1,0 +1,19 @@
+{
+  "version": 2,
+  "builds": [
+    { "src": "index.js", "use": "@vercel/node" },
+    { "src": "winback.js", "use": "@vercel/node" },
+    { "src": "dashboard.html", "use": "@vercel/static" }
+  ],
+  "routes": [
+    { "src": "/winback", "dest": "winback.js" },
+    { "src": "/dashboard", "dest": "dashboard.html" },
+    { "src": "/(.*)", "dest": "index.js" }
+  ],
+  "crons": [
+    {
+      "path": "/winback",
+      "schedule": "0 9 * * *"
+    }
+  ]
+}
